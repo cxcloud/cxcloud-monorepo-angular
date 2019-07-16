@@ -1,0 +1,11 @@
+namespace: $GIT_BRANCH
+routing:
+  domain: $GIT_BRANCH.dev.cxcloud.com
+  ingressClass: $INGRESS_CLASS
+  lbCert: $LB_CERT
+  scheme: $SCHEME
+  ssl: false
+  rules:
+    - path: /
+      serviceName: package-frontend
+      servicePort: 80
