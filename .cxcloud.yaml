@@ -1,11 +1,52 @@
 namespace: $GIT_BRANCH
-routing:
-  domain: $GIT_BRANCH.dev.cxcloud.com
-  ingressClass: $INGRESS_CLASS
-  lbCert: $LB_CERT
-  scheme: $SCHEME
-  ssl: false
-  rules:
-    - path: /
-      serviceName: package-frontend
-      servicePort: 80
+deployment:
+  name: $APP_NAME
+  image:
+    name: $APP_NAME
+    repository: $ECR_REPOSITORY
+    version: $APP_VERSION
+  serviceAnnotations:
+    alb.ingress.kubernetes.io/healthcheck-path: '/healthcheck'
+  containerPort: 4200
+  port: 80
+  replicas: $MIN_REPLICAS
+  cpuRequest: $CPU_REQUEST
+  nodeSelector:
+    kops.k8s.io/instancegroup: $INSTANCE_GROUP
+  autoscaling:
+    minReplicas: $MIN_REPLICAS
+    maxReplicas: $MAX_REPLICAS
+    targetAverageUtilization: 75
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: CTP_PROJECT_KEY
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CTP_PROJECT_KEY
+    - name: CTP_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CTP_CLIENT_SECRET
+    - name: CTP_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CTP_CLIENT_ID
+    - name: CTP_AUTH_URL
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CTP_AUTH_URL
+    - name: CTP_API_URL
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CTP_API_URL
+    - name: CTP_SCOPES
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CTP_SCOPES

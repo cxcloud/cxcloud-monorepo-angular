@@ -8,7 +8,7 @@ export const environment = {
   production: false,
   siteName: 'CXCloud DEV',
   commerce: {
-    apiUrl: 'https://demo.cxcloud.com/api/commerce/v1',
+    apiUrl: 'http://localhost:4003/api/commerce/v1',
     indexName: 'dev_COMMERCE'
   },
   content: {
