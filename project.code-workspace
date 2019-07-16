@@ -1,0 +1,18 @@
+{
+  "folders": [
+    {
+      "path": "packages/package-frontend",
+      "name": "Frontend"
+    },
+    {
+      "path": ".",
+      "name": "Root"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "packages": true
+    },
+    "typescript.tsdk": "Root/node_modules/typescript/lib"
+  }
+}

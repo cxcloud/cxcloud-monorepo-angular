@@ -1,1 +1,1 @@
-# CXCloud demo in mono repo
+# CXCloud mono repository demo

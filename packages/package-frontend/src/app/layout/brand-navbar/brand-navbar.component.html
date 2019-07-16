@@ -1,0 +1,39 @@
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-start navbar-brand is-hidden-touch">
+      <a class="navbar-item" routerLink="/">
+        <span class="icon icon-map-marker"></span> Stores
+      </a>
+      <a class="navbar-item" routerLink="/">
+        <span class="icon icon-help-circle-outline"></span> Help
+      </a>
+      <a class="navbar-item" routerLink="/">
+        <span class="icon icon-phone "></span> +358 40 123 45 67
+      </a>
+    </div>
+    <div class="navbar-menu brand-menu is-inline-flex">
+      <div class="navbar-end">
+        <ng-container *ngIf="currentUser; else: anonymous">
+          <a class="navbar-item" routerLink="/user">
+            <span class="icon icon-account "></span> {{ currentUser.firstName }}
+          </a>
+          <a class="navbar-item" (click)="logOut()">
+            <span class="icon icon-logout "></span> Log out
+          </a>
+        </ng-container>
+        <ng-template #anonymous>
+          <a class="navbar-item" routerLink="/user/login">
+            <span class="icon icon-account "></span> LogIn
+          </a>
+        </ng-template>
+        <a class="navbar-item" routerLink="/cart">
+          <span class="icon icon-cart "></span>
+          <span class="badge" [attr.data-badge]="total">Cart</span>
+        </a>
+      </div>
+    </div>
+    <span class="navbar-burger burger is-flex-touch" data-target="navMainMenu">
+      <span></span> <span></span> <span></span>
+    </span>
+  </div>
+</nav>
