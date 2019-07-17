@@ -6,6 +6,7 @@ deployment:
     repository: $ECR_REPOSITORY
     version: $APP_VERSION
   containerPort: 4003
+  port: 80
   replicas: $MIN_REPLICAS
   cpuRequest: $CPU_REQUEST
   nodeSelector:
@@ -13,7 +14,7 @@ deployment:
   autoscaling:
     minReplicas: $MIN_REPLICAS
     maxReplicas: $MAX_REPLICAS
-    targetAverageUtilization: 75
+    targetAverageUtilization: $TARGET_CPU
   env:
     - name: NODE_ENV
       value: production
