@@ -1,0 +1,40 @@
+namespace: $GIT_BRANCH
+deployment:
+  name: $APP_NAME
+  image:
+    name: $APP_NAME
+    repository: $ECR_REPOSITORY
+    version: $APP_VERSION
+  containerPort: 4003
+  port: 80
+  replicas: $MIN_REPLICAS
+  cpuRequest: $CPU_REQUEST
+  nodeSelector:
+    kops.k8s.io/instancegroup: $INSTANCE_GROUP
+  autoscaling:
+    minReplicas: $MIN_REPLICAS
+    maxReplicas: $MAX_REPLICAS
+    targetAverageUtilization: $TARGET_CPU
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: CONTENTFUL_MANAGEMENT_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CONTENTFUL_MANAGEMENT_API_TOKEN
+    - name: CONTENTFUL_DELIVERY_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CONTENTFUL_DELIVERY_API_TOKEN
+    - name: CONTENTFUL_ENVIRONMENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CONTENTFUL_ENVIRONMENT_ID
+    - name: CONTENTFUL_SPACE_ID
+      valueFrom:
+        secretKeyRef:
+          name: cxcloud-demo-secret
+          key: CONTENTFUL_SPACE_ID

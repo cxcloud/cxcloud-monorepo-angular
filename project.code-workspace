@@ -9,6 +9,10 @@
       "name": "Commerce"
     },
     {
+      "path": "packages/package-content",
+      "name": "Content"
+    },
+    {
       "path": ".",
       "name": "Root"
     }
