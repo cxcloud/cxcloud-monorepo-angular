@@ -5,6 +5,10 @@
       "name": "Frontend"
     },
     {
+      "path": "packages/package-commerce",
+      "name": "Commerce"
+    },
+    {
       "path": ".",
       "name": "Root"
     }
