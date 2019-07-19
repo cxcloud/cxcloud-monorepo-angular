@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run swagger",
-    "start": "ts-node src/index.ts | bunyan",
+    "start": "ts-node src/index.ts",
     "start:production": "node dist/index.js",
     "dev": "npm run swagger && nodemon",
     "swagger": "swaggerGen -c ./swagger.config.json"

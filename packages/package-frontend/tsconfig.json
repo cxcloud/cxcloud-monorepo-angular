@@ -10,17 +10,11 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "target": "es5",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "lib": [
-      "es2017",
-      "dom"
-    ]
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["es2017", "dom"]
   },
-  "include": [
-    "./src/**/*",
-    "./node_modules/@cxcloud/ct-types/*"
-  ]
+  "include": ["./src/**/*", "./node_modules/@cxcloud/ct-types/*"]
 }
