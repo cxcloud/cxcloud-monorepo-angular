@@ -5,5 +5,5 @@
   },
   "ignore": ["dist/*"],
   "ext": "js ts json",
-  "exec": "ts-node ./src/index.ts | bunyan"
+  "exec": "ts-node ./src/index.ts"
 }
