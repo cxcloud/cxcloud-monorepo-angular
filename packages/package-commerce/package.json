@@ -1,7 +1,7 @@
 {
   "name": "commerce",
   "version": "0.1.0",
-  "description": "A CXCloud Microservice",
+  "description": "A CXCloud Commerce Microservice",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run swagger",
