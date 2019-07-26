@@ -53,7 +53,6 @@ def getPRState(pr) {
     }
 }
 
-
 def updateDomainName(oldSubDomain, newSubDomain, protocol) {
     echo 'replace domain name in .cxcloud.yaml'
     sh "yq w -i .cxcloud.yaml routing.domain \$(yq r .cxcloud.yaml routing.domain | sed s/${oldSubDomain}/${newSubDomain}/)"
@@ -189,11 +188,11 @@ pipeline {
                             }
                             comitterAvatar = "https://avatars.githubusercontent.com/${lastComitter}?size=128"
                             ingressClass = 'nginx'
-                            lbCert = getACMCertificateARN('*.dev.scandinavianman.com', defaultAWSRegion)
+                            lbCert = getACMCertificateARN('*.dev.demo.cxcloud.com', defaultAWSRegion)
                             lbScheme = 'internal'
                             cpuRequest = '250m'
                             instanceGroup = 'application'
-                            repositoryUri = '900616243192.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-dev-images'
+                            repositoryUri = '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
                         }
                     }
                 }
@@ -228,11 +227,11 @@ pipeline {
                             flowMessage = "Pushed to ${currentNamespace}"
                             branchDescription = env.BRANCH_NAME
                             ingressClass = 'nginx'
-                            lbCert = getACMCertificateARN('*.dev.scandinavianman.com', defaultAWSRegion)
+                            lbCert = getACMCertificateARN('*.demo.cxcloud.com', defaultAWSRegion)
                             lbScheme = 'internal'
                             cpuRequest = '250m'
                             instanceGroup = 'application'
-                            repositoryUri = '900616243192.dkr.ecr.eu-west-1.amazonaws.com/cxcoud-dev-images'
+                            repositoryUri = '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
                         }
                     }
                 }
@@ -247,12 +246,12 @@ pipeline {
                             flowMessage = "Deployed tagged version, ${env.BRANCH_NAME} to Production"
                             branchDescription = "Production (${env.BRANCH_NAME})"
                             ingressClass = 'alb'
-                            lbCert = getACMCertificateARN('scandinavianman.com', defaultAWSRegion)
+                            lbCert = getACMCertificateARN('demo.cxcloud.com', defaultAWSRegion)
                             lbScheme = 'internet-facing'
                             cpuRequest = '333m'
                             instanceGroup = 'application'
                             minReplicas = 2
-                            repositoryUri = '260237689589.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-prod-images'
+                            repositoryUri = '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
                         }
                     }
                 }
@@ -285,83 +284,83 @@ pipeline {
             }
         }
 
-        stage('SonarQube analysis') {
-            when {
-                expression {
-                    !isReleaseTag()
-                }
-            }
-            steps {
-                script {
-                    def projects = ''
-                    def projectName = ''
-                    if (isPR()) {
-                        projects = getModifiedProjects(firstCommit).split()
-                    } else {
-                        projects = getAllProjects('*').split()
-                    }
-                    for (project in projects) {
-                        if (project == ".") {
-                            continue
-                        }
-                        projectName = sh (
-                            script: "echo \$(basename ${project})",
-                            returnStdout: true
-                        ).trim()
-                        withSonarQubeEnv('SonarQube') {
-                            sh """cd ${project}
-                                sonar-scanner \
-                                    -Dsonar.projectKey=\"${projectName}-${branchName}\" \
-                                    -Dsonar.projectName=\"${projectName} (${branchName})\"
-                            """
-                        }
-                    }
-                }
-            }
-        }
+        // stage('SonarQube analysis') {
+        //     when {
+        //         expression {
+        //             !isReleaseTag()
+        //         }
+        //     }
+        //     steps {
+        //         script {
+        //             def projects = ''
+        //             def projectName = ''
+        //             if (isPR()) {
+        //                 projects = getModifiedProjects(firstCommit).split()
+        //             } else {
+        //                 projects = getAllProjects('*').split()
+        //             }
+        //             for (project in projects) {
+        //                 if (project == ".") {
+        //                     continue
+        //                 }
+        //                 projectName = sh (
+        //                     script: "echo \$(basename ${project})",
+        //                     returnStdout: true
+        //                 ).trim()
+        //                 withSonarQubeEnv('SonarQube') {
+        //                     sh """cd ${project}
+        //                         sonar-scanner \
+        //                             -Dsonar.projectKey=\"${projectName}-${branchName}\" \
+        //                             -Dsonar.projectName=\"${projectName} (${branchName})\"
+        //                     """
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('SonarQube Quality Gate') {
-            when {
-                expression {
-                    isBaseBranch() || isPR()
-                }
-            }
-            steps {
-                script {
-                    def qualityGateError = false
-                    def projects = ''
-                    if (isPR()) {
-                        projects = getModifiedProjects(firstCommit).split()
-                    } else {
-                        projects = getAllProjects('*').split()
-                    }
-                    for (project in projects) {
-                        if (project == ".") {
-                            continue
-                        }
-                        def ceTaskUrl = getReportTaskValue(project, 'ceTaskUrl')
-                        def dashboardUrl = getReportTaskValue(project, 'dashboardUrl')
-                        def status = sh (
-                            script: "curl -s ${ceTaskUrl} | jq -r .task.status",
-                            returnStdout: true
-                        ).trim()
-                        if (status != "SUCCESS") {
-                            qualityGateError = true
-                            if (isPR()) {
-                                pullRequest.comment(
-                                    """Pipeline failed due to SorarQube quality gate failure!
-                                        ${dashboardUrl}
-                                    """
-                                )
-                            }
-                        }
-                    }
-                    if (qualityGateError == true) {
-                        error "Pipeline failed due to SorarQube quality gate failure"
-                    }
-                }
-            }
-        }
+        // stage('SonarQube Quality Gate') {
+        //     when {
+        //         expression {
+        //             isBaseBranch() || isPR()
+        //         }
+        //     }
+        //     steps {
+        //         script {
+        //             def qualityGateError = false
+        //             def projects = ''
+        //             if (isPR()) {
+        //                 projects = getModifiedProjects(firstCommit).split()
+        //             } else {
+        //                 projects = getAllProjects('*').split()
+        //             }
+        //             for (project in projects) {
+        //                 if (project == ".") {
+        //                     continue
+        //                 }
+        //                 def ceTaskUrl = getReportTaskValue(project, 'ceTaskUrl')
+        //                 def dashboardUrl = getReportTaskValue(project, 'dashboardUrl')
+        //                 def status = sh (
+        //                     script: "curl -s ${ceTaskUrl} | jq -r .task.status",
+        //                     returnStdout: true
+        //                 ).trim()
+        //                 if (status != "SUCCESS") {
+        //                     qualityGateError = true
+        //                     if (isPR()) {
+        //                         pullRequest.comment(
+        //                             """Pipeline failed due to SorarQube quality gate failure!
+        //                                 ${dashboardUrl}
+        //                             """
+        //                         )
+        //                     }
+        //                 }
+        //             }
+        //             if (qualityGateError == true) {
+        //                 error "Pipeline failed due to SorarQube quality gate failure"
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Create namespace') {
             when {
