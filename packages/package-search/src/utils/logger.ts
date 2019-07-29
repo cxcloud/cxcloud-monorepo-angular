@@ -1,10 +1,12 @@
-import * as bunyan from 'bunyan';
-import * as config from 'config';
+import config from 'config';
+import winston, { format } from 'winston';
+import pkgInfo from '../../package.json';
+const { combine, json, errors } = format;
+const level = config.get<string>('debug.logLevel') || 'info';
 
-const pkgInfo = require('../../package.json');
-const loggerLevel = config.get<bunyan.LogLevel>('debug.logLevel') || 'info';
-
-export const logger = bunyan.createLogger({
-  name: pkgInfo.name,
-  level: loggerLevel
+export const logger = winston.createLogger({
+  level,
+  format: combine(errors({ stack: true }), json()),
+  defaultMeta: { service: pkgInfo.name },
+  transports: [new winston.transports.Console()]
 });

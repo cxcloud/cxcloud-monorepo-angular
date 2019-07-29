@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run swagger",
-    "start": "ts-node src/index.ts | bunyan",
+    "start": "ts-node src/index.ts",
     "start:production": "node dist/index.js",
     "dev": "npm run swagger && nodemon",
     "swagger": "swaggerGen -c ./swagger.config.json",
@@ -18,16 +18,15 @@
   "dependencies": {
     "@cxcloud/content": "^1.0.0",
     "body-parser": "^1.18.2",
-    "bunyan": "^1.8.12",
     "config": "^1.27.0",
     "cors": "^2.8.4",
     "dotenv": "^8.0.0",
     "express": "^4.16.2",
-    "express-api-error-handler": "^1.1.0"
+    "express-api-error-handler": "^1.1.0",
+    "winston": "^3.2.1"
   },
   "devDependencies": {
     "@types/body-parser": "^1.16.5",
-    "@types/bunyan": "^1.8.3",
     "@types/config": "0.0.33",
     "@types/cors": "^2.8.1",
     "@types/express": "^4.0.37",

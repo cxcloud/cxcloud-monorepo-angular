@@ -7,7 +7,7 @@ def currentNamespaceURL = ''
 def secretSource = 'applications'
 def defaultAWSRegion = 'eu-west-1'
 def firstCommit = ''
-def nameSpaceExists = 'false'
+def namespaceExists = false
 def flowMessage = ''
 def gitUrl = ''
 def branchName = ''
@@ -155,27 +155,10 @@ pipeline {
             steps {
                 echo 'Cheking if Kubernetes namespace exists'
                 script {
-                    // if (isBaseBranch()) {
-                    //     currentNamespace = "staging"
-                    // }
-                    // if (isReleaseTag()) {
-                    //     currentNamespace = "www"
-                    // }
-                    nameSpaceExists = sh (
+                    namespaceExists = sh (
                         script: "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}",
                         returnStatus: true
                     ) == 0
-
-                    echo "Status Code ${nameSpaceExists}"
-
-                    // try {
-                    //     sh "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}"
-                    //     echo 'Kubernetes namespace exists'
-                    //     nameSpaceExists = 'true'
-                    // } catch (err) {
-                    //     echo 'Kubernetes namespace doesn`t seem to exist'
-                    //     return true
-                    // }
                 }
             }
         }
@@ -191,10 +174,10 @@ pipeline {
                     steps {
                         script {
                             branchName = pullRequest.headRef
-                            currentNamespaceURL = updateDomainName('\\$GIT_BRANCH', currentNamespace, protocol)
+                            currentNamespaceURL = updateDomainName('\\$GIT_BRANCH', currentNamespace[getDeploymentEnvironment()], protocol)
                             flowMessage = "<b>" + pullRequest.title + "</b><p>" + pullRequest.body + "</p>"
                             gitUrl = pullRequest.url
-                            branchDescription = pullRequest.headRef + " (" + currentNamespace + ")"
+                            branchDescription = pullRequest.headRef + " (" + currentNamespace[getDeploymentEnvironment()] + ")"
                             for (commit in pullRequest.commits) {
                                 if (firstCommit == '') {
                                     firstCommit = commit.sha
@@ -221,7 +204,7 @@ pipeline {
                     steps {
                         script {
                             branchName = env.BRANCH_NAME
-                            currentNamespaceURL = updateDomainName('\\$GIT_BRANCH.dev', currentNamespace, protocol)
+                            currentNamespaceURL = updateDomainName('\\$GIT_BRANCH.dev', currentNamespace[getDeploymentEnvironment()], protocol)
                             lastCommitMessage = sh (
                                 script: 'git log -1 --pretty=%B',
                                 returnStdout: true
@@ -240,7 +223,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            flowMessage = "Pushed to ${currentNamespace}"
+                            flowMessage = "Pushed to ${currentNamespace[getDeploymentEnvironment()]}"
                             branchDescription = env.BRANCH_NAME
                             ingressClass = 'nginx'
                             lbCert = getACMCertificateARN('*.demo.cxcloud.com', defaultAWSRegion)
@@ -381,11 +364,11 @@ pipeline {
         stage('Create namespace') {
             when {
                 expression {
-                    !isOnlyBranch() && nameSpaceExists == 'false'
+                    !isOnlyBranch() && namespaceExists == false
                 }
             }
             steps {
-                sh "kubectl create namespace ${currentNamespace}"
+                sh "kubectl create namespace ${currentNamespace[getDeploymentEnvironment()]}"
             }
         }
 
@@ -399,7 +382,7 @@ pipeline {
                 script {
                     sh """
                         kubectl get secret --no-headers -n ${secretSource} | grep -v 'default-' | awk {'print \$1'} | xargs -I % bash -c \
-                        'kubectl get secret % --export -o yaml -n ${secretSource} | yq w - metadata.namespace \"${currentNamespace}\" | kubectl apply -f -'
+                        'kubectl get secret % --export -o yaml -n ${secretSource} | yq w - metadata.namespace \"${currentNamespace[getDeploymentEnvironment()]}\" | kubectl apply -f -'
                     """
                 }
             }
@@ -418,7 +401,7 @@ pipeline {
                         script {
                             def shortHash = getShortHash()
                             def projects = ''
-                            if (nameSpaceExists == 'true') {
+                            if (namespaceExists == true) {
                                 echo 'Only deploying modified services'
                                 projects = getModifiedProjects(firstCommit)
                             } else {
@@ -426,8 +409,8 @@ pipeline {
                                 projects = getAllProjects('.')
                             }
                             deployProjects(
-                                modifiedProjects,
-                                currentNamespace,
+                                projects,
+                                currentNamespace[getDeploymentEnvironment()],
                                 repositoryUri,
                                 "${BUILD_NUMBER}-${shortHash}",
                                 defaultAWSRegion,
@@ -439,7 +422,7 @@ pipeline {
                                 minReplicas,
                                 maxReplicas
                             )
-                            if (nameSpaceExists != 'true') {
+                            if (namespaceExists != true) {
                                 echo 'Writing URL of Kubernetes namespace as a comment'
                                 pullRequest.comment("Environment is available here: $currentNamespaceURL")
                             }
@@ -460,7 +443,7 @@ pipeline {
                             def shortHash = getShortHash()
                             deployProjects(
                               projects,
-                              currentNamespace,
+                              currentNamespace[getDeploymentEnvironment()],
                               repositoryUri,
                               "${BUILD_NUMBER}-${shortHash}",
                               defaultAWSRegion,
@@ -483,7 +466,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            echo "Deploying tagged branch, ${currentNamespace} to production"
+                            echo "Deploying tagged branch, ${currentNamespace[getDeploymentEnvironment()]} to production"
                             sh "yq d -i .cxcloud.yaml routing.domain"
                             def nrOfPaths = sh (
                                 script: "yq r .cxcloud.yaml 'routing.rules[*].path' | wc -l",
@@ -496,7 +479,7 @@ pipeline {
                             def projects = getAllProjects('.')
                             deployProjects(
                               projects,
-                              currentNamespace,
+                              currentNamespace[getDeploymentEnvironment()],
                               repositoryUri,
                               BRANCH_NAME,
                               defaultAWSRegion,
@@ -576,8 +559,8 @@ pipeline {
                             -e \"${currentNamespaceURL}\"
                         """
                     }
-                    if (nameSpaceExists == 'false') {
-                        sh "kubectl delete namespace ${currentNamespace}"
+                    if (namespaceExists == false) {
+                        sh "kubectl delete namespace ${currentNamespace[getDeploymentEnvironment()]}"
                     }
                 }
             }
