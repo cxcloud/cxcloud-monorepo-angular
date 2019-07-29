@@ -14,7 +14,7 @@ deployment:
   autoscaling:
     minReplicas: $MIN_REPLICAS
     maxReplicas: $MAX_REPLICAS
-    targetAverageUtilization: $TARGET_CPU
+    targetAverageUtilization: 75
   env:
     - name: NODE_ENV
       value: production
