@@ -5,25 +5,79 @@ def currentNamespace = [
 ]
 def currentNamespaceURL = ''
 def secretSource = 'applications'
-def defaultAWSRegion = 'eu-west-1'
+def defaultAWSRegion = [
+    'pr' :         'eu-west-1',
+    'staging' :    'eu-west-1',
+    'production' : 'eu-west-1'
+]
+def oldSubDomainInYaml = [
+    'pr' :         '\\$GIT_BRANCH',
+    'staging' :    '\\$GIT_BRANCH.dev',
+    'production' : '\\$GIT_BRANCH.dev'
+]
+def protocol = [
+    'pr' :         'https://',
+    'staging' :    'https://',
+    'production' : 'https://'
+]
+def certificateACM = [
+    'pr' :         '*.dev.demo.cxcloud.com',
+    'staging' :    '*.demo.cxcloud.com',
+    'production' : 'demo.cxcloud.com'
+]
 def firstCommit = ''
 def namespaceExists = false
-def flowMessage = ''
+def flowMessage = [
+    'pr' :         '',
+    'staging' :    "Pushed to ${getDeploymentEnvironment()}",
+    'production' : "Deployed tagged version, ${env.BRANCH_NAME} to Production"
+]
 def gitUrl = ''
 def branchName = ''
-def brnachDescription = ''
+def branchDescription = [
+    'pr' :         '',
+    'staging' :    env.BRANCH_NAME,
+    'production' : "Production (${env.BRANCH_NAME})"
+]
 def lastComitter = ''
 def lastCommitMessage = ''
 def comitterAvatar = ''
-def protocol = 'https://'
-def ingressClass = ''
 def lbCert = ''
-def lbScheme = ''
-def cpuRequest = ''
-def instanceGroup = ''
-def minReplicas = 1
-def maxReplicas = 40
-def repositoryUri = ''
+def ingressClass = [
+    'pr' :         'nginx',
+    'staging' :    'nginx',
+    'production' : 'alb'
+]
+def lbScheme = [
+    'pr' :         'internal',
+    'staging' :    'internet-facing',
+    'production' : 'internet-facing'
+]
+def cpuRequest = [
+    'pr' :         '250m',
+    'staging' :    '250m',
+    'production' : '333m'
+]
+def instanceGroup = [
+    'pr' :         'application',
+    'staging' :    'application',
+    'production' : 'application'
+]
+def minReplicas = [
+    'pr' :         1,
+    'staging' :    2,
+    'production' : 2
+]
+def maxReplicas = [
+    'pr' :         40,
+    'staging' :    40,
+    'production' : 40
+]
+def repositoryUri = [
+    'pr' :         '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images',
+    'staging' :    '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images',
+    'production' : '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
+]
 
 def isBaseBranch() {
     return (env.BRANCH_NAME == "master")
@@ -146,25 +200,27 @@ pipeline {
     }
 
     stages {
-        stage('Check namespace') {
-            when {
-                expression {
-                    !isOnlyBranch()
-                }
-            }
-            steps {
-                echo 'Cheking if Kubernetes namespace exists'
-                script {
-                    namespaceExists = sh (
-                        script: "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}",
-                        returnStatus: true
-                    ) == 0
-                }
-            }
-        }
-
         stage('Set variables') {
             parallel {
+              stage('For all') {
+                    steps {
+                        script {
+                            namespaceExists = sh (
+                                script: "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}",
+                                returnStatus: true
+                            ) == 0
+                            currentNamespaceURL = updateDomainName(
+                                oldSubDomainInYaml[getDeploymentEnvironment()],
+                                currentNamespace[getDeploymentEnvironment()],
+                                protocol[getDeploymentEnvironment()]
+                            )
+                            lbCert = getACMCertificateARN(
+                                certificateACM[getDeploymentEnvironment()],
+                                defaultAWSRegion[getDeploymentEnvironment()]
+                            )
+                        }
+                    }
+                }
                 stage('For pull requests') {
                     when {
                         expression {
@@ -174,10 +230,9 @@ pipeline {
                     steps {
                         script {
                             branchName = pullRequest.headRef
-                            currentNamespaceURL = updateDomainName('\\$GIT_BRANCH', currentNamespace[getDeploymentEnvironment()], protocol)
-                            flowMessage = "<b>" + pullRequest.title + "</b><p>" + pullRequest.body + "</p>"
+                            flowMessage['pr'] = "<b>" + pullRequest.title + "</b><p>" + pullRequest.body + "</p>"
                             gitUrl = pullRequest.url
-                            branchDescription = pullRequest.headRef + " (" + currentNamespace[getDeploymentEnvironment()] + ")"
+                            branchDescription['pr'] = pullRequest.headRef + " (" + currentNamespace[getDeploymentEnvironment()] + ")"
                             for (commit in pullRequest.commits) {
                                 if (firstCommit == '') {
                                     firstCommit = commit.sha
@@ -186,16 +241,10 @@ pipeline {
                                 lastCommitMessage = commit.message
                             }
                             comitterAvatar = "https://avatars.githubusercontent.com/${lastComitter}?size=128"
-                            ingressClass = 'nginx'
-                            lbCert = getACMCertificateARN('*.dev.demo.cxcloud.com', defaultAWSRegion)
-                            lbScheme = 'internal'
-                            cpuRequest = '250m'
-                            instanceGroup = 'application'
-                            repositoryUri = '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
                         }
                     }
                 }
-                stage('For branches') {
+                stage('For normal branches') {
                     when {
                         expression {
                             !isPR()
@@ -204,7 +253,6 @@ pipeline {
                     steps {
                         script {
                             branchName = env.BRANCH_NAME
-                            currentNamespaceURL = updateDomainName('\\$GIT_BRANCH.dev', currentNamespace[getDeploymentEnvironment()], protocol)
                             lastCommitMessage = sh (
                                 script: 'git log -1 --pretty=%B',
                                 returnStdout: true
@@ -212,45 +260,6 @@ pipeline {
                             gitUrl = env.GIT_URL
                             lastComitter = 'Jenkins'
                             comitterAvatar = 'https://wiki.jenkins.io/download/attachments/2916393/headshot.png?version=1&modificationDate=1302753947000&api=v2'
-                        }
-                    }
-                }
-                stage('For staging') {
-                    when {
-                        expression {
-                            isBaseBranch()
-                        }
-                    }
-                    steps {
-                        script {
-                            flowMessage = "Pushed to ${currentNamespace[getDeploymentEnvironment()]}"
-                            branchDescription = env.BRANCH_NAME
-                            ingressClass = 'nginx'
-                            lbCert = getACMCertificateARN('*.demo.cxcloud.com', defaultAWSRegion)
-                            lbScheme = 'internal'
-                            cpuRequest = '250m'
-                            instanceGroup = 'application'
-                            repositoryUri = '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
-                        }
-                    }
-                }
-                stage('For production') {
-                    when {
-                        expression {
-                            isReleaseTag()
-                        }
-                    }
-                    steps {
-                        script {
-                            flowMessage = "Deployed tagged version, ${env.BRANCH_NAME} to Production"
-                            branchDescription = "Production (${env.BRANCH_NAME})"
-                            ingressClass = 'alb'
-                            lbCert = getACMCertificateARN('demo.cxcloud.com', defaultAWSRegion)
-                            lbScheme = 'internet-facing'
-                            cpuRequest = '333m'
-                            instanceGroup = 'application'
-                            minReplicas = 2
-                            repositoryUri = '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
                         }
                     }
                 }
@@ -411,20 +420,20 @@ pipeline {
                             deployProjects(
                                 projects,
                                 currentNamespace[getDeploymentEnvironment()],
-                                repositoryUri,
+                                repositoryUri[getDeploymentEnvironment()],
                                 "${BUILD_NUMBER}-${shortHash}",
-                                defaultAWSRegion,
-                                cpuRequest,
-                                instanceGroup,
-                                ingressClass,
-                                lbScheme,
+                                defaultAWSRegion[getDeploymentEnvironment()],
+                                cpuRequest[getDeploymentEnvironment()],
+                                instanceGroup[getDeploymentEnvironment()],
+                                ingressClass[getDeploymentEnvironment()],
+                                lbScheme[getDeploymentEnvironment()],
                                 lbCert,
-                                minReplicas,
-                                maxReplicas
+                                minReplicas[getDeploymentEnvironment()],
+                                maxReplicas[getDeploymentEnvironment()]
                             )
                             if (namespaceExists != true) {
                                 echo 'Writing URL of Kubernetes namespace as a comment'
-                                pullRequest.comment("Environment is available here: $currentNamespaceURL")
+                                pullRequest.comment("Environment is available here: ${currentNamespaceURL}")
                             }
                         }
                     }
@@ -444,16 +453,16 @@ pipeline {
                             deployProjects(
                               projects,
                               currentNamespace[getDeploymentEnvironment()],
-                              repositoryUri,
+                              repositoryUri[getDeploymentEnvironment()],
                               "${BUILD_NUMBER}-${shortHash}",
-                              defaultAWSRegion,
-                              cpuRequest,
-                              instanceGroup,
-                              ingressClass,
-                              lbScheme,
+                              defaultAWSRegion[getDeploymentEnvironment()],
+                              cpuRequest[getDeploymentEnvironment()],
+                              instanceGroup[getDeploymentEnvironment()],
+                              ingressClass[getDeploymentEnvironment()],
+                              lbScheme[getDeploymentEnvironment()],
                               lbCert,
-                              minReplicas,
-                              maxReplicas)
+                              minReplicas[getDeploymentEnvironment()],
+                              maxReplicas[getDeploymentEnvironment()])
                         }
                     }
                 }
@@ -480,16 +489,16 @@ pipeline {
                             deployProjects(
                               projects,
                               currentNamespace[getDeploymentEnvironment()],
-                              repositoryUri,
+                              repositoryUri[getDeploymentEnvironment()],
                               BRANCH_NAME,
-                              defaultAWSRegion,
-                              cpuRequest,
-                              instanceGroup,
-                              ingressClass,
-                              lbScheme,
+                              defaultAWSRegion[getDeploymentEnvironment()],
+                              cpuRequest[getDeploymentEnvironment()],
+                              instanceGroup[getDeploymentEnvironment()],
+                              ingressClass[getDeploymentEnvironment()],
+                              lbScheme[getDeploymentEnvironment()],
                               lbCert,
-                              minReplicas,
-                              maxReplicas)
+                              minReplicas[getDeploymentEnvironment()],
+                              maxReplicas[getDeploymentEnvironment()])
                         }
                     }
                 }
@@ -527,10 +536,10 @@ pipeline {
                 if (!isOnlyBranch()) {
                     withCredentials([string(credentialsId: 'notify-flowdock', variable: 'TOKEN')]) {
                         sh """flowdock -t \"\$TOKEN\" \
-                            -m \"${flowMessage}\" \
+                            -m \"${flowMessage[getDeploymentEnvironment()]}\" \
                             -j \"${env.RUN_DISPLAY_URL}\" \
                             -g \"${gitUrl}\" \
-                            -b \"${branchDescription}\" \
+                            -b \"${branchDescription[getDeploymentEnvironment()]}\" \
                             -s \"SUCCESS\" \
                             -c \"green\" \
                             -n \"${lastComitter}\" \
@@ -547,10 +556,10 @@ pipeline {
                 if (!isOnlyBranch()) {
                     withCredentials([string(credentialsId: 'notify-flowdock', variable: 'TOKEN')]) {
                         sh """flowdock -t \"\$TOKEN\" \
-                            -m \"${flowMessage}\" \
+                            -m \"${flowMessage[getDeploymentEnvironment()]}\" \
                             -j \"${env.RUN_DISPLAY_URL}\" \
                             -g \"${gitUrl}\" \
-                            -b \"${branchDescription}\" \
+                            -b \"${branchDescription[getDeploymentEnvironment()]}\" \
                             -s \"FAILURE\" \
                             -c \"red\" \
                             -n \"${lastComitter}\" \

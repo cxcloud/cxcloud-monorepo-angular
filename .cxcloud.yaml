@@ -1,6 +1,6 @@
 namespace: $GIT_BRANCH
 routing:
-  domain: $GIT_BRANCH.dev.cxcloud.com
+  domain: $GIT_BRANCH.dev.demo.cxcloud.com
   ingressClass: $INGRESS_CLASS
   lbCert: $LB_CERT
   scheme: $SCHEME
