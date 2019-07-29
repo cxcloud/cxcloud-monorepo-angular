@@ -36,6 +36,7 @@
     "nodemon": "^1.17.1",
     "ts-node": "^3.3.0",
     "typescript-rest": "^1.2.2",
-    "typescript-rest-swagger": "0.0.17"
+    "typescript-rest-swagger": "0.0.17",
+    "typescript": "^3.3.3333"
   }
 }

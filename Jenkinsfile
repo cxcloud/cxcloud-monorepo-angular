@@ -1,4 +1,8 @@
-def currentNamespace = env.BRANCH_NAME.toLowerCase()
+def currentNamespace = [
+    'pr' :         env.BRANCH_NAME.toLowerCase(),
+    'staging' :    'staging',
+    'production' : 'www'
+]
 def currentNamespaceURL = ''
 def secretSource = 'applications'
 def defaultAWSRegion = 'eu-west-1'
@@ -37,6 +41,18 @@ def isOnlyBranch() {
     return !(isBaseBranch() || isPR() || isReleaseTag())
 }
 
+def getDeploymentEnvironment() {
+    if (isPR()) {
+        return 'pr'
+    } else if (isBaseBranch()) {
+        return 'staging'
+    } else if (isReleaseTag()) {
+        return 'production'
+    } else {
+        return 'branch'
+    }
+}
+
 def getPRState(pr) {
     withCredentials([
         [$class: 'UsernamePasswordMultiBinding', credentialsId:'cxcloud-git', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN'],
@@ -45,46 +61,41 @@ def getPRState(pr) {
             script: "git remote -v | grep fetch | grep -oP \"(?<=github.com/).*(?=\\.git)\"",
             returnStdout: true
         ).trim()
-        def state = sh(
+        return sh(
             script: "curl -s --user '${GIT_USER}:${GIT_TOKEN}' 'https://api.github.com/repos/${gitOwnerRepo}/pulls/${pr}' | jq -r .state",
             returnStdout: true
         ).trim()
-        return state
     }
 }
 
 def updateDomainName(oldSubDomain, newSubDomain, protocol) {
     echo 'replace domain name in .cxcloud.yaml'
     sh "yq w -i .cxcloud.yaml routing.domain \$(yq r .cxcloud.yaml routing.domain | sed s/${oldSubDomain}/${newSubDomain}/)"
-    def routingURL = sh (
+    return sh (
         script: "echo -n '${protocol}' && yq r .cxcloud.yaml routing.domain",
         returnStdout: true
     ).trim().toLowerCase()
-    return routingURL
 }
 
 def getAllProjects(path) {
-    def projects = sh (
+    return sh (
         script: "find ${path} -maxdepth 3 -name .cxcloud.yaml -exec dirname {} \\;",
         returnStdout: true
     ).trim()
-    return projects
 }
 
 def getModifiedProjects(fromCommit) {
-    def projects = sh (
+    return sh (
         script: "detectModifiedProjects.sh .cxcloud.yaml ${fromCommit} HEAD",
         returnStdout: true
     ).trim()
-    return projects
 }
 
 def getShortHash() {
-    def hash = sh (
+    return sh (
         script: "git rev-parse --short HEAD",
         returnStdout: true
     ).trim()
-    return hash
 }
 
 def deployProjects(projects, namespace, ecrRepository, buildNumber, AWSRegion, cpuRequest, instanceGroup, ingressClass, lbScheme, lbCert, minReplicas, maxReplicas) {
@@ -111,22 +122,20 @@ def deployProjects(projects, namespace, ecrRepository, buildNumber, AWSRegion, c
 }
 
 def getACMCertificateARN(domainName, awsRegion) {
-  def arn = sh (
+  return sh (
         script: "aws acm list-certificates --region ${awsRegion} \
           | jq -r '.CertificateSummaryList[] | select(.DomainName == \"${domainName}\") | .CertificateArn'",
         returnStdout: true
     ).trim()
-    return arn
 }
 
 def getReportTaskValue(project, key) {
-  def val = sh (
+  return sh (
         script: """val=\$(cat ${project}/.scannerwork/report-task.txt | grep ${key})
             echo \${val#*=}
         """,
         returnStdout: true
     ).trim()
-    return val
 }
 
 pipeline {
@@ -146,14 +155,14 @@ pipeline {
             steps {
                 echo 'Cheking if Kubernetes namespace exists'
                 script {
-                    if (isBaseBranch()) {
-                        currentNamespace = "staging"
-                    }
-                    if (isReleaseTag()) {
-                        currentNamespace = "www"
-                    }
+                    // if (isBaseBranch()) {
+                    //     currentNamespace = "staging"
+                    // }
+                    // if (isReleaseTag()) {
+                    //     currentNamespace = "www"
+                    // }
                     try {
-                        sh "kubectl get namespace -namespace ${currentNamespace}"
+                        sh "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}"
                         echo 'Kubernetes namespace exists'
                         nameSpaceExists = 'true'
                     } catch (err) {
@@ -401,38 +410,29 @@ pipeline {
                     steps {
                         script {
                             def shortHash = getShortHash()
+                            def projects = ''
                             if (nameSpaceExists == 'true') {
                                 echo 'Only deploying modified services'
-                                def modifiedProjects = getModifiedProjects(firstCommit)
-                                deployProjects(
-                                  modifiedProjects,
-                                  currentNamespace,
-                                  repositoryUri,
-                                  "${BUILD_NUMBER}-${shortHash}",
-                                  defaultAWSRegion,
-                                  cpuRequest,
-                                  instanceGroup,
-                                  ingressClass,
-                                  lbScheme,
-                                  lbCert,
-                                  minReplicas,
-                                  maxReplicas)
+                                def projects = getModifiedProjects(firstCommit)
                             } else {
-                                echo 'Deploying everything'
+                                echo 'Deploying all projects'
                                 def projects = getAllProjects('.')
-                                deployProjects(
-                                  projects,
-                                  currentNamespace,
-                                  repositoryUri,
-                                  "${BUILD_NUMBER}-${shortHash}",
-                                  defaultAWSRegion,
-                                  cpuRequest,
-                                  instanceGroup,
-                                  ingressClass,
-                                  lbScheme,
-                                  lbCert,
-                                  minReplicas,
-                                  maxReplicas)
+                            }
+                            deployProjects(
+                                modifiedProjects,
+                                currentNamespace,
+                                repositoryUri,
+                                "${BUILD_NUMBER}-${shortHash}",
+                                defaultAWSRegion,
+                                cpuRequest,
+                                instanceGroup,
+                                ingressClass,
+                                lbScheme,
+                                lbCert,
+                                minReplicas,
+                                maxReplicas
+                            )
+                            if (nameSpaceExists != 'true') {
                                 echo 'Writing URL of Kubernetes namespace as a comment'
                                 pullRequest.comment("Environment is available here: $currentNamespaceURL")
                             }
