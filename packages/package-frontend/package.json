@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "ng": "ng",
-    "dev": "ng serve",
+    "dev": "npm rebuild node-sass && ng serve --host 0.0.0.0",
     "start": "serve dist/ --single",
     "build": "ng build --prod --build-optimizer --extract-css --configuration=${ENVIRONMENT:-production} && npm run generate-config",
     "generate-config": "ts-node scripts/extract-config.ts",
@@ -59,6 +59,7 @@
     "rxjs-tslint": "^0.1.5",
     "serve": "^11.1.0",
     "ts-node": "~3.2.0",
-    "tslint": "^5.11.0"
+    "tslint": "^5.11.0",
+    "typescript": "3.4.1"
   }
 }

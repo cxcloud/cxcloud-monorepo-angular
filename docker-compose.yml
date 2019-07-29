@@ -1,0 +1,60 @@
+version: '3'
+services:
+  traefik:
+    command: '--web --docker --docker.domain=localhost'
+    image: traefik
+    ports:
+      - '8080:80'
+      - '8081:8080'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/dev/null:/traefik.toml'
+    logging:
+      driver: none
+
+  content:
+    image: node:12
+    working_dir: /var/www/app
+    volumes:
+      - ./packages/package-content/:/var/www/app
+    command: npm run dev
+    env_file:
+      - .env
+    depends_on:
+      - traefik
+    labels:
+      - traefik.port=4003
+      - traefik.backend=content
+      - 'traefik.frontend.rule=Host:localhost'
+      - 'traefik.frontend.rule=Host:content.localhost'
+
+  commerce:
+    image: node:12
+    working_dir: /var/www/app
+    volumes:
+      - ./packages/package-commerce/:/var/www/app
+    command: npm run dev
+    env_file:
+      - .env
+    depends_on:
+      - traefik
+    labels:
+      - traefik.port=4003
+      - traefik.backend=commerce
+      - 'traefik.frontend.rule=Host:localhost'
+      - 'traefik.frontend.rule=Host:commerce.localhost'
+
+  frontend:
+    image: node:10-alpine
+    working_dir: /var/www/app
+    volumes:
+      - ./packages/package-frontend/:/var/www/app
+    command: npm run dev
+    env_file:
+      - .env
+    depends_on:
+      - traefik
+    labels:
+      - traefik.port=4200
+      - traefik.backend=front
+      - 'traefik.frontend.rule=Host:localhost'
