@@ -1,14 +1,15 @@
 {
   "name": "content",
   "version": "0.1.0",
-  "description": "A CXCloud Content microservice",
+  "description": "A CXCloud Content Microservice",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run swagger",
     "start": "ts-node src/index.ts",
     "start:production": "node dist/index.js",
     "dev": "npm run swagger && nodemon",
-    "swagger": "swaggerGen -c ./swagger.config.json"
+    "swagger": "swaggerGen -c ./swagger.config.json",
+    "test": "jest --coverage --coverageDirectory=quality-reports"
   },
   "author": {
     "name": "Nadia Törnroos"
@@ -28,10 +29,13 @@
     "@types/config": "0.0.33",
     "@types/cors": "^2.8.1",
     "@types/express": "^4.0.37",
-    "@types/node": "^8.0.45",
+    "@types/jest": "^24.0.11",
+    "@types/node": "^8.10.51",
+    "jest": "^24.5.0",
+    "jest-fetch-mock": "^2.1.2",
     "nodemon": "^1.17.1",
+    "ts-jest": "^24.0.0",
     "ts-node": "^3.3.0",
-    "typescript": "^2.6.2",
     "typescript-rest": "^1.2.2",
     "typescript-rest-swagger": "0.0.17"
   }
