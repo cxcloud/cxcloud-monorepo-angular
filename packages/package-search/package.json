@@ -1,7 +1,7 @@
 {
-  "name": "commerce",
+  "name": "search",
   "version": "0.1.0",
-  "description": "A CXCloud Commerce Microservice",
+  "description": "A CXCloud Search Microservice",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run swagger",
@@ -9,24 +9,33 @@
     "start:production": "node dist/index.js",
     "dev": "npm run swagger && nodemon",
     "swagger": "swaggerGen -c ./swagger.config.json",
+    "format": "prettier --write 'src/**/*.ts'",
+    "precommit": "lint-staged",
     "test": "jest --coverage --coverageDirectory=quality-reports"
   },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nadezhda/search.git"
+  },
   "author": {
+    "email": "nadia.kolodyazhnaya@gmail.com",
     "name": "Nadia Törnroos"
   },
   "license": "ISC",
   "dependencies": {
-    "@buttercup/generator": "^1.2.0",
-    "@cxcloud/commerce": "^1.0.8",
-    "@cxcloud/ct-types": "^0.6.0",
+    "@cxcloud/search": "^1.0.0",
     "body-parser": "^1.18.2",
     "config": "^1.27.0",
     "cors": "^2.8.4",
     "dotenv": "^8.0.0",
     "express": "^4.16.2",
-    "express-api-error-handler": "^1.1.0",
-    "find-config": "^1.0.0",
-    "winston": "^3.2.1"
+    "express-api-error-handler": "^1.1.0"
   },
   "devDependencies": {
     "@types/body-parser": "^1.16.5",
@@ -37,11 +46,14 @@
     "@types/node": "^8.10.51",
     "jest": "^24.5.0",
     "jest-fetch-mock": "^2.1.2",
+    "husky": "^0.14.3",
+    "lint-staged": "^4.3.0",
     "nodemon": "^1.17.1",
     "ts-jest": "^24.0.0",
+    "prettier": "^1.7.4",
     "ts-node": "^3.3.0",
+    "typescript": "^2.6.2",
     "typescript-rest": "^1.2.2",
-    "typescript-rest-swagger": "0.0.17",
-    "@types/winston": "^2.4.4"
+    "typescript-rest-swagger": "0.0.17"
   }
 }

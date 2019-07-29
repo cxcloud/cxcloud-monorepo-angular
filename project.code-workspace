@@ -13,6 +13,10 @@
       "name": "Content"
     },
     {
+      "path": "packages/package-search",
+      "name": "Search"
+    },
+    {
       "path": ".",
       "name": "Root"
     }

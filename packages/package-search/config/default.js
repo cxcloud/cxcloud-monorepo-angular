@@ -7,10 +7,9 @@ module.exports = {
   debug: {
     logLevel: 'debug'
   },
-  contentful: {
-    sdkConfig: {
-      space: process.env.CONTENTFUL_SPACE_ID,
-      accessToken: process.env.CONTENTFUL_DELIVERY_API_TOKEN
-    }
+  domain: 'demo.cxcloud.com',
+  algolia: {
+    applicationId: process.env.ALGOLIA_APPLICATION_ID,
+    apiKey: process.env.ALGOLIA_API_KEY
   }
 };

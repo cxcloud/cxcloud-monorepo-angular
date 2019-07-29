@@ -1,18 +1,18 @@
-import express from 'express';
-import cors from 'cors';
-import config from 'config';
-import path from 'path';
-import os from 'os';
-import bodyParser from 'body-parser';
+import * as express from 'express';
+import * as cors from 'cors';
+import * as config from 'config';
+import * as path from 'path';
+import * as os from 'os';
+import * as bodyParser from 'body-parser';
 import { Server } from 'typescript-rest';
 import { logger } from './utils/logger';
 import { attachAuthToken } from './utils/auth-middleware';
 import controllers from './controllers';
 
 const { errorHandler } = require('express-api-error-handler');
+const pkg = require('../package.json');
 
 const app = express();
-const host = config.has('host') ? config.get<string>('host') : null;
 const port = config.get<number>('port') || 3000;
 let server: any;
 
@@ -22,11 +22,13 @@ app.use(attachAuthToken);
 app.disable('x-powered-by');
 
 // Health Check
-app.get('/api/commerce', (req, res) => {
+app.get('/api/search', (req, res) => {
   res.json({
     health: 'OK',
     uptime: process.uptime(),
-    hostname: os.hostname()
+    hostname: os.hostname(),
+    version: pkg.version,
+    NODE_ENV: process.env.NODE_ENV
   });
 });
 
@@ -37,12 +39,10 @@ Server.buildServices(v1, ...controllers);
 Server.swagger(
   v1,
   path.resolve(__dirname, '../dist/swagger.json'),
-  '/api-docs',
-  host || `localhost:${port}`,
-  [host ? 'https' : 'http']
+  '/api-docs'
 );
 
-app.use('/api/commerce/v1', v1);
+app.use('/api/search/v1', v1);
 
 // Final Handler
 app.use(
