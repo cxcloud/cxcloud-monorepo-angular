@@ -161,14 +161,21 @@ pipeline {
                     // if (isReleaseTag()) {
                     //     currentNamespace = "www"
                     // }
-                    try {
-                        sh "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}"
-                        echo 'Kubernetes namespace exists'
-                        nameSpaceExists = 'true'
-                    } catch (err) {
-                        echo 'Kubernetes namespace doesn`t seem to exist'
-                        return true
-                    }
+                    nameSpaceExists = sh (
+                        script: "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}",
+                        returnStatus: true
+                    ) == 0
+
+                    echo "Status Code ${nameSpaceExists}"
+
+                    // try {
+                    //     sh "kubectl get namespace -namespace ${currentNamespace[getDeploymentEnvironment()]}"
+                    //     echo 'Kubernetes namespace exists'
+                    //     nameSpaceExists = 'true'
+                    // } catch (err) {
+                    //     echo 'Kubernetes namespace doesn`t seem to exist'
+                    //     return true
+                    // }
                 }
             }
         }
@@ -413,10 +420,10 @@ pipeline {
                             def projects = ''
                             if (nameSpaceExists == 'true') {
                                 echo 'Only deploying modified services'
-                                def projects = getModifiedProjects(firstCommit)
+                                projects = getModifiedProjects(firstCommit)
                             } else {
                                 echo 'Deploying all projects'
-                                def projects = getAllProjects('.')
+                                projects = getAllProjects('.')
                             }
                             deployProjects(
                                 modifiedProjects,
