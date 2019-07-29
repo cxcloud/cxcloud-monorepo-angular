@@ -1,9 +1,9 @@
-import * as express from 'express';
-import * as cors from 'cors';
-import * as config from 'config';
-import * as path from 'path';
-import * as os from 'os';
-import * as bodyParser from 'body-parser';
+import express from 'express';
+import cors from 'cors';
+import config from 'config';
+import path from 'path';
+import os from 'os';
+import bodyParser from 'body-parser';
 import { Server } from 'typescript-rest';
 import { logger } from './utils/logger';
 import { attachAuthToken } from './utils/auth-middleware';
