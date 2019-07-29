@@ -1,24 +1,37 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { async, TestBed } from '@angular/core/testing';
-import { AppComponent } from './app.component';
+// import { TestObject } from "protractor/built/driverProviders";
 
-describe('AppComponent', () => {
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [AppComponent],
-      schemas: [NO_ERRORS_SCHEMA]
-    }).compileComponents();
-  }));
+// import { TestBed, async } from '@angular/core/testing';
+// import { AppComponent } from './app.component';
+// describe('AppComponent', () => {
+//   beforeEach(async(() => {
+//     TestBed.configureTestingModule({
+//       declarations: [
+//         AppComponent
+//       ],
+//     }).compileComponents();
+//   }));
+//   it('should create the app', async(() => {
+//     const fixture = TestBed.createComponent(AppComponent);
+//     const app = fixture.debugElement.componentInstance;
+//     expect(app).toBeTruthy();
+//   }));
+//   it(`should have as title 'my-awesome-app'`, async(() => {
+//     const fixture = TestBed.createComponent(AppComponent);
+//     const app = fixture.debugElement.componentInstance;
+//     expect(app.title).toEqual('my-awesome-app');
+//   }));
+//   it('should render title in a h1 tag', async(() => {
+//     const fixture = TestBed.createComponent(AppComponent);
+//     fixture.detectChanges();
+//     const compiled = fixture.debugElement.nativeElement;
+//     expect(compiled.querySelector('h1').textContent).toContain('Welcome to my-awesome-app!');
+//   }));
+// });
 
-  it('should create the app', async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app).toBeTruthy();
-  }));
+const sum = (a, b) => a + b;
 
-  it(`should have as title 'CX Cloud Demo'`, async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('CX Cloud Demo');
-  }));
+describe('', () => {
+  test('Test sum', () => {
+    expect(sum(1, 2)).toEqual(3);
+  });
 });
