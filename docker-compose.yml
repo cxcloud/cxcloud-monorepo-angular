@@ -44,6 +44,22 @@ services:
       - 'traefik.frontend.rule=Host:localhost'
       - 'traefik.frontend.rule=Host:commerce.localhost'
 
+  search:
+    image: node:12
+    working_dir: /var/www/app
+    volumes:
+      - ./packages/package-search/:/var/www/app
+    command: npm run dev
+    env_file:
+      - .env
+    depends_on:
+      - traefik
+    labels:
+      - traefik.port=4003
+      - traefik.backend=search
+      - 'traefik.frontend.rule=Host:localhost'
+      - 'traefik.frontend.rule=Host:search.localhost'
+
   frontend:
     image: node:10-alpine
     working_dir: /var/www/app
