@@ -4,8 +4,8 @@ services:
     command: '--web --docker --docker.domain=localhost'
     image: traefik
     ports:
-      - '8080:80'
-      - '8081:8080'
+      - '80:80'
+      - '8080:8080'
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '/dev/null:/traefik.toml'
@@ -24,8 +24,6 @@ services:
       - traefik
     labels:
       - traefik.port=4003
-      - traefik.backend=content
-      - 'traefik.frontend.rule=Host:localhost'
       - 'traefik.frontend.rule=Host:content.localhost'
 
   commerce:
@@ -40,8 +38,6 @@ services:
       - traefik
     labels:
       - traefik.port=4003
-      - traefik.backend=commerce
-      - 'traefik.frontend.rule=Host:localhost'
       - 'traefik.frontend.rule=Host:commerce.localhost'
 
   search:
@@ -56,8 +52,6 @@ services:
       - traefik
     labels:
       - traefik.port=4003
-      - traefik.backend=search
-      - 'traefik.frontend.rule=Host:localhost'
       - 'traefik.frontend.rule=Host:search.localhost'
 
   frontend:
@@ -72,5 +66,4 @@ services:
       - traefik
     labels:
       - traefik.port=4200
-      - traefik.backend=front
       - 'traefik.frontend.rule=Host:localhost'
