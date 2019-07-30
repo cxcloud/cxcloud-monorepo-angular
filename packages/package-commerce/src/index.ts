@@ -22,7 +22,7 @@ app.use(attachAuthToken);
 app.disable('x-powered-by');
 
 // Health Check
-app.get('/api/commerce', (req, res) => {
+app.get('/api/commerce', (req: any, res: any) => {
   res.json({
     health: 'OK',
     uptime: process.uptime(),
