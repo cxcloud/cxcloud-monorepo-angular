@@ -1,83 +1,83 @@
 def currentNamespace = [
-    'pr' :         env.BRANCH_NAME.toLowerCase(),
-    'staging' :    'staging',
+    'pr'         : env.BRANCH_NAME.toLowerCase(),
+    'staging'    : 'staging',
     'production' : 'www'
 ]
-def currentNamespaceURL = ''
-def secretSource = 'applications'
 def defaultAWSRegion = [
-    'pr' :         'eu-west-1',
-    'staging' :    'eu-west-1',
+    'pr'         : 'eu-west-1',
+    'staging'    : 'eu-west-1',
     'production' : 'eu-west-1'
 ]
 def oldSubDomainInYaml = [
-    'pr' :         '\\$GIT_BRANCH',
-    'staging' :    '\\$GIT_BRANCH.dev',
+    'pr'         : '\\$GIT_BRANCH',
+    'staging'    : '\\$GIT_BRANCH.dev',
     'production' : '\\$GIT_BRANCH.dev'
 ]
 def protocol = [
-    'pr' :         'https://',
-    'staging' :    'https://',
+    'pr'         : 'https://',
+    'staging'    : 'https://',
     'production' : 'https://'
 ]
 def certificateACM = [
-    'pr' :         '*.dev.demo.cxcloud.com',
-    'staging' :    '*.demo.cxcloud.com',
+    'pr'         : '*.dev.demo.cxcloud.com',
+    'staging'    : '*.demo.cxcloud.com',
     'production' : 'demo.cxcloud.com'
 ]
-def firstCommit = ''
-def namespaceExists = false
 def flowMessage = [
-    'pr' :         '',
-    'staging' :    "Pushed to ${getDeploymentEnvironment()}",
+    'pr'         : '',
+    'staging'    : "Pushed to ${getDeploymentEnvironment()}",
     'production' : "Deployed tagged version, ${env.BRANCH_NAME} to Production"
 ]
-def gitUrl = ''
-def branchName = ''
 def branchDescription = [
-    'pr' :         '',
-    'staging' :    env.BRANCH_NAME,
+    'pr'         : '',
+    'staging'    : env.BRANCH_NAME,
     'production' : "Production (${env.BRANCH_NAME})"
 ]
-def lastComitter = ''
-def lastCommitMessage = ''
-def comitterAvatar = ''
-def lbCert = ''
 def ingressClass = [
-    'pr' :         'nginx',
-    'staging' :    'nginx',
+    'pr'         : 'nginx',
+    'staging'    : 'nginx',
     'production' : 'alb'
 ]
 def lbScheme = [
-    'pr' :         'internal',
-    'staging' :    'internet-facing',
+    'pr'         : 'internal',
+    'staging'    : 'internet-facing',
     'production' : 'internet-facing'
 ]
 def cpuRequest = [
-    'pr' :         '250m',
-    'staging' :    '250m',
+    'pr'         : '250m',
+    'staging'    : '250m',
     'production' : '333m'
 ]
 def instanceGroup = [
-    'pr' :         'application',
-    'staging' :    'application',
+    'pr'         : 'application',
+    'staging'    : 'application',
     'production' : 'application'
 ]
 def minReplicas = [
-    'pr' :         1,
-    'staging' :    2,
+    'pr'         : 1,
+    'staging'    : 2,
     'production' : 2
 ]
 def maxReplicas = [
-    'pr' :         40,
-    'staging' :    40,
+    'pr'         : 40,
+    'staging'    : 40,
     'production' : 40
 ]
 def repositoryUri = [
-    'pr' :         '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images',
-    'staging' :    '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images',
+    'pr'         : '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images',
+    'staging'    : '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images',
     'production' : '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
 ]
+def namespaceExists     = false
+def currentNamespaceURL = ''
+def secretSource        = 'applications'
+def firstCommit         = ''
+def gitUrl              = ''
+def branchName          = ''
+def lastComitter        = ''
+def lastCommitMessage   = ''
+def comitterAvatar      = ''
+def lbCert              = ''
 
 def isBaseBranch() {
     return (env.BRANCH_NAME == "master")
@@ -153,24 +153,25 @@ def getShortHash() {
 }
 
 def deployProjects(projects, namespace, ecrRepository, buildNumber, AWSRegion, cpuRequest, instanceGroup, ingressClass, lbScheme, lbCert, minReplicas, maxReplicas) {
-    if (projects != "") {
+    for (project in projects) {
+        echo "Deploying project ${project}"
         sh """
-            echo \"${projects}\" | xargs -n 1 -I % bash -c \
-            \"cd % && \
-              GIT_BRANCH='${namespace}' \
-              APP_VERSION='${namespace}-${buildNumber}' \
-              ECR_REPOSITORY='${ecrRepository}' \
-              AWS_DEFAULT_REGION='${AWSRegion}' \
-              CPU_REQUEST='${cpuRequest}' \
-              INSTANCE_GROUP='${instanceGroup}' \
-              INGRESS_CLASS='${ingressClass}' \
-              SCHEME='${lbScheme}' \
-              LB_CERT='${lbCert}' \
-              MIN_REPLICAS='${minReplicas}' \
-              MAX_REPLICAS='${maxReplicas}' \
-              cxcloud deploy\"
+            cd ${project} && \
+            GIT_BRANCH='${namespace}' \
+            APP_VERSION='${namespace}-${buildNumber}' \
+            ECR_REPOSITORY='${ecrRepository}' \
+            AWS_DEFAULT_REGION='${AWSRegion}' \
+            CPU_REQUEST='${cpuRequest}' \
+            INSTANCE_GROUP='${instanceGroup}' \
+            INGRESS_CLASS='${ingressClass}' \
+            SCHEME='${lbScheme}' \
+            LB_CERT='${lbCert}' \
+            MIN_REPLICAS='${minReplicas}' \
+            MAX_REPLICAS='${maxReplicas}' \
+            cxcloud deploy
         """
-    } else {
+    }
+    if (projects != "") {
         echo "Nothing to deploy"
     }
 }
@@ -231,8 +232,8 @@ pipeline {
                         script {
                             branchName = pullRequest.headRef
                             flowMessage['pr'] = "<b>" + pullRequest.title + "</b><p>" + pullRequest.body + "</p>"
-                            gitUrl = pullRequest.url
                             branchDescription['pr'] = pullRequest.headRef + " (" + currentNamespace[getDeploymentEnvironment()] + ")"
+                            gitUrl = pullRequest.url
                             for (commit in pullRequest.commits) {
                                 if (firstCommit == '') {
                                     firstCommit = commit.sha
@@ -412,10 +413,10 @@ pipeline {
                             def projects = ''
                             if (namespaceExists == true) {
                                 echo 'Only deploying modified services'
-                                projects = getModifiedProjects(firstCommit)
+                                projects = getModifiedProjects(firstCommit).split()
                             } else {
                                 echo 'Deploying all projects'
-                                projects = getAllProjects('.')
+                                projects = getAllProjects('.').split()
                             }
                             deployProjects(
                                 projects,
@@ -448,7 +449,7 @@ pipeline {
                     steps {
                         script {
                             echo "Deploying master branch to staging"
-                            def projects = getAllProjects('.')
+                            def projects = getAllProjects('.').split()
                             def shortHash = getShortHash()
                             deployProjects(
                               projects,
@@ -485,7 +486,7 @@ pipeline {
                               sh "yq w -i .cxcloud.yaml 'routing.rules[${i}].path' \"\$(yq r .cxcloud.yaml 'routing.rules[${i}].path')*\""
                             }
                             
-                            def projects = getAllProjects('.')
+                            def projects = getAllProjects('.').split()
                             deployProjects(
                               projects,
                               currentNamespace[getDeploymentEnvironment()],
