@@ -2,17 +2,17 @@ export const environment = {
   production: false,
   siteName: 'CXCloud DEV',
   commerce: {
-    apiUrl: 'http://localhost:4003/api/commerce/v1',
+    apiUrl: '/api/commerce/v1',
     indexName: 'dev_COMMERCE'
   },
   content: {
-    apiUrl: 'http://localhost:4003/api/content/v1',
+    apiUrl: '/api/content/v1',
     indexName: 'dev_CONTENT'
   },
   auth: {
-    apiUrl: 'http://localhost:4003/api/commerce/v1/auth'
+    apiUrl: '/api/commerce/v1/auth'
   },
   search: {
-    apiUrl: 'https://demo.cxcloud.com/api/search/v1'
+    apiUrl: '/api/search/v1'
   }
 };

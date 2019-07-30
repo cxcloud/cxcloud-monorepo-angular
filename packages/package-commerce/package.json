@@ -1,5 +1,5 @@
 {
-  "name": "commerce",
+  "name": "package-commerce",
   "version": "0.1.0",
   "description": "A CXCloud Commerce Microservice",
   "main": "dist/index.js",

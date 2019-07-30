@@ -6,9 +6,15 @@ routing:
   scheme: $SCHEME
   ssl: false
   rules:
-    - path: /commerce
+    - path: /api/commerce
       serviceName: package-commerce
-      servicePort: 80
+      servicePort: 4003
+    - path: /api/content
+      serviceName: package-content
+      servicePort: 4003
+    - path: /api/search
+      serviceName: package-search
+      servicePort: 4003
     - path: /
       serviceName: package-frontend
       servicePort: 80

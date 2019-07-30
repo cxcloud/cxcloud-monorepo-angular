@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "package-frontend",
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
