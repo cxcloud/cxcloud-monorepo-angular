@@ -68,16 +68,21 @@ def repositoryUri = [
     'staging'    : '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images',
     'production' : '307365680736.dkr.ecr.eu-west-1.amazonaws.com/cxcloud-images'
 ]
+def useHostRouting = [
+    'pr'         : true,
+    'staging'    : true,
+    'production' : false
+]
 def namespaceExists     = false
 def currentNamespaceURL = ''
 def secretSource        = 'applications'
-def firstCommit         = ''
 def gitUrl              = ''
 def branchName          = ''
 def lastComitter        = ''
 def lastCommitMessage   = ''
 def comitterAvatar      = ''
 def lbCert              = ''
+def projects            = []
 
 def isBaseBranch() {
     return (env.BRANCH_NAME == "master")
@@ -152,13 +157,16 @@ def getShortHash() {
     ).trim()
 }
 
-def deployProjects(projects, namespace, ecrRepository, buildNumber, AWSRegion, cpuRequest, instanceGroup, ingressClass, lbScheme, lbCert, minReplicas, maxReplicas) {
+def deployProjects(projects, namespace, ecrRepository, identifier, AWSRegion, cpuRequest, instanceGroup, ingressClass, lbScheme, lbCert, minReplicas, maxReplicas) {
+    if (projects.length == 0) {
+        echo "Nothing to deploy"
+    }
     for (project in projects) {
         echo "Deploying project ${project}"
         sh """
             cd ${project} && \
             GIT_BRANCH='${namespace}' \
-            APP_VERSION='${namespace}-${buildNumber}' \
+            APP_VERSION='${namespace}-${identifier}' \
             ECR_REPOSITORY='${ecrRepository}' \
             AWS_DEFAULT_REGION='${AWSRegion}' \
             CPU_REQUEST='${cpuRequest}' \
@@ -170,9 +178,6 @@ def deployProjects(projects, namespace, ecrRepository, buildNumber, AWSRegion, c
             MAX_REPLICAS='${maxReplicas}' \
             cxcloud deploy
         """
-    }
-    if (projects != "") {
-        echo "Nothing to deploy"
     }
 }
 
@@ -219,6 +224,18 @@ pipeline {
                                 certificateACM[getDeploymentEnvironment()],
                                 defaultAWSRegion[getDeploymentEnvironment()]
                             )
+                            if (ingressClass[getDeploymentEnvironment()] == "alb") {
+                                def nrOfPaths = sh (
+                                    script: "yq r .cxcloud.yaml 'routing.rules[*].path' | wc -l",
+                                    returnStdout: true
+                                ).trim().toInteger()
+                                for (int i = 0; i < nrOfPaths; i++) {
+                                    sh "yq w -i .cxcloud.yaml 'routing.rules[${i}].path' \"\$(yq r .cxcloud.yaml 'routing.rules[${i}].path')*\""
+                                }
+                            }
+                            if (useHostRouting == false) {
+                                sh "yq d -i .cxcloud.yaml routing.domain"
+                            }
                         }
                     }
                 }
@@ -230,18 +247,20 @@ pipeline {
                     }
                     steps {
                         script {
-                            branchName = pullRequest.headRef
-                            flowMessage['pr'] = "<b>" + pullRequest.title + "</b><p>" + pullRequest.body + "</p>"
+                            def firstCommit         = ''
+                            branchName              = pullRequest.headRef
+                            flowMessage['pr']       = "<b>" + pullRequest.title + "</b><p>" + pullRequest.body + "</p>"
                             branchDescription['pr'] = pullRequest.headRef + " (" + currentNamespace[getDeploymentEnvironment()] + ")"
-                            gitUrl = pullRequest.url
+                            gitUrl                  = pullRequest.url
                             for (commit in pullRequest.commits) {
                                 if (firstCommit == '') {
                                     firstCommit = commit.sha
                                 }
-                                lastComitter = commit.committer
+                                lastComitter      = commit.committer
                                 lastCommitMessage = commit.message
                             }
                             comitterAvatar = "https://avatars.githubusercontent.com/${lastComitter}?size=128"
+                            projects       = getModifiedProjects(firstCommit).split()
                         }
                     }
                 }
@@ -253,21 +272,22 @@ pipeline {
                     }
                     steps {
                         script {
-                            branchName = env.BRANCH_NAME
+                            branchName        = env.BRANCH_NAME
                             lastCommitMessage = sh (
                                 script: 'git log -1 --pretty=%B',
                                 returnStdout: true
                             ).trim()
-                            gitUrl = env.GIT_URL
-                            lastComitter = 'Jenkins'
+                            gitUrl         = env.GIT_URL
+                            lastComitter   = 'Jenkins'
                             comitterAvatar = 'https://wiki.jenkins.io/download/attachments/2916393/headshot.png?version=1&modificationDate=1302753947000&api=v2'
+                            projects       = getAllProjects('.').split()
                         }
                     }
                 }
             }
         }
 
-        stage('Run Tests') {
+        stage('Run tests') {
             when {
                 expression {
                     !isReleaseTag()
@@ -275,12 +295,6 @@ pipeline {
             }
             steps {
                 script {
-                    def projects = ''
-                    if (isPR()) {
-                        projects = getModifiedProjects(firstCommit).split()
-                    } else {
-                        projects = getAllProjects('*').split()
-                    }
                     for (project in projects) {
                         if (project == ".") {
                             continue
@@ -293,83 +307,71 @@ pipeline {
             }
         }
 
-        // stage('SonarQube analysis') {
-        //     when {
-        //         expression {
-        //             !isReleaseTag()
-        //         }
-        //     }
-        //     steps {
-        //         script {
-        //             def projects = ''
-        //             def projectName = ''
-        //             if (isPR()) {
-        //                 projects = getModifiedProjects(firstCommit).split()
-        //             } else {
-        //                 projects = getAllProjects('*').split()
-        //             }
-        //             for (project in projects) {
-        //                 if (project == ".") {
-        //                     continue
-        //                 }
-        //                 projectName = sh (
-        //                     script: "echo \$(basename ${project})",
-        //                     returnStdout: true
-        //                 ).trim()
-        //                 withSonarQubeEnv('SonarQube') {
-        //                     sh """cd ${project}
-        //                         sonar-scanner \
-        //                             -Dsonar.projectKey=\"${projectName}-${branchName}\" \
-        //                             -Dsonar.projectName=\"${projectName} (${branchName})\"
-        //                     """
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube analysis') {
+            when {
+                expression {
+                    !isReleaseTag()
+                }
+            }
+            steps {
+                script {
+                    def projectName = ''
+                    for (project in projects) {
+                        if (project == ".") {
+                            continue
+                        }
+                        projectName = sh (
+                            script: "echo \$(basename ${project})",
+                            returnStdout: true
+                        ).trim()
+                        withSonarQubeEnv('SonarQube') {
+                            sh """cd ${project}
+                                sonar-scanner \
+                                    -Dsonar.projectKey=\"${projectName}-${branchName}\" \
+                                    -Dsonar.projectName=\"${projectName} (${branchName})\"
+                            """
+                        }
+                    }
+                }
+            }
+        }
 
-        // stage('SonarQube Quality Gate') {
-        //     when {
-        //         expression {
-        //             isBaseBranch() || isPR()
-        //         }
-        //     }
-        //     steps {
-        //         script {
-        //             def qualityGateError = false
-        //             def projects = ''
-        //             if (isPR()) {
-        //                 projects = getModifiedProjects(firstCommit).split()
-        //             } else {
-        //                 projects = getAllProjects('*').split()
-        //             }
-        //             for (project in projects) {
-        //                 if (project == ".") {
-        //                     continue
-        //                 }
-        //                 def ceTaskUrl = getReportTaskValue(project, 'ceTaskUrl')
-        //                 def dashboardUrl = getReportTaskValue(project, 'dashboardUrl')
-        //                 def status = sh (
-        //                     script: "curl -s ${ceTaskUrl} | jq -r .task.status",
-        //                     returnStdout: true
-        //                 ).trim()
-        //                 if (status != "SUCCESS") {
-        //                     qualityGateError = true
-        //                     if (isPR()) {
-        //                         pullRequest.comment(
-        //                             """Pipeline failed due to SorarQube quality gate failure!
-        //                                 ${dashboardUrl}
-        //                             """
-        //                         )
-        //                     }
-        //                 }
-        //             }
-        //             if (qualityGateError == true) {
-        //                 error "Pipeline failed due to SorarQube quality gate failure"
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube quality gate') {
+            when {
+                expression {
+                    isBaseBranch() || isPR()
+                }
+            }
+            steps {
+                script {
+                    def qualityGateError = false
+                    for (project in projects) {
+                        if (project == ".") {
+                            continue
+                        }
+                        def ceTaskUrl    = getReportTaskValue(project, 'ceTaskUrl')
+                        def dashboardUrl = getReportTaskValue(project, 'dashboardUrl')
+                        def status       = sh (
+                            script: "curl -s ${ceTaskUrl} | jq -r .task.status",
+                            returnStdout: true
+                        ).trim()
+                        if (status != "SUCCESS") {
+                            qualityGateError = true
+                            if (isPR()) {
+                                pullRequest.comment(
+                                    """Pipeline failed due to SorarQube quality gate failure!
+                                        ${dashboardUrl}
+                                    """
+                                )
+                            }
+                        }
+                    }
+                    if (qualityGateError == true) {
+                        error "Pipeline failed due to SorarQube quality gate failure"
+                    }
+                }
+            }
+        }
 
         stage('Create namespace') {
             when {
@@ -398,31 +400,59 @@ pipeline {
             }
         }
 
-        stage ('Deploy') {
+        stage ('Deploy projects') {
             parallel {
 
-                stage('DEV/TEST') {
+                stage('To DEV/TEST') {
                     when {
                         expression {
                             isPR()
                         }
                     }
                     steps {
+                        echo "Deploying DEV/TEST environment"
+                    }
+                }
+
+                stage('To staging') {
+                    when {
+                        expression {
+                            isBaseBranch()
+                        }
+                    }
+                    steps {
+                        echo "Deploying master branch to staging"
+                    }
+                }
+
+                stage('To production') {
+                    when {
+                        expression {
+                            isReleaseTag()
+                        }
+                    }
+                    steps {
                         script {
-                            def shortHash = getShortHash()
-                            def projects = ''
-                            if (namespaceExists == true) {
-                                echo 'Only deploying modified services'
-                                projects = getModifiedProjects(firstCommit).split()
-                            } else {
-                                echo 'Deploying all projects'
+                            echo "Deploying tagged branch, ${currentNamespace[getDeploymentEnvironment()]} to production"
+                        }
+                    }
+                }
+                stage('Deploy') {
+                    steps {
+                        script {
+                            def shortHash  = getShortHash()
+                            def identifier = "${BUILD_NUMBER}-${shortHash}"
+                            if (isReleaseTag()) {
+                                identifier = BRANCH_NAME
+                            }
+                            if (namespaceExists == false) {
                                 projects = getAllProjects('.').split()
                             }
                             deployProjects(
                                 projects,
                                 currentNamespace[getDeploymentEnvironment()],
                                 repositoryUri[getDeploymentEnvironment()],
-                                "${BUILD_NUMBER}-${shortHash}",
+                                identifier,
                                 defaultAWSRegion[getDeploymentEnvironment()],
                                 cpuRequest[getDeploymentEnvironment()],
                                 instanceGroup[getDeploymentEnvironment()],
@@ -432,74 +462,10 @@ pipeline {
                                 minReplicas[getDeploymentEnvironment()],
                                 maxReplicas[getDeploymentEnvironment()]
                             )
-                            if (namespaceExists != true) {
+                            if (namespaceExists != true && isPR()) {
                                 echo 'Writing URL of Kubernetes namespace as a comment'
                                 pullRequest.comment("Environment is available here: ${currentNamespaceURL}")
                             }
-                        }
-                    }
-                }
-
-                stage('Staging') {
-                    when {
-                        expression {
-                            isBaseBranch()
-                        }
-                    }
-                    steps {
-                        script {
-                            echo "Deploying master branch to staging"
-                            def projects = getAllProjects('.').split()
-                            def shortHash = getShortHash()
-                            deployProjects(
-                              projects,
-                              currentNamespace[getDeploymentEnvironment()],
-                              repositoryUri[getDeploymentEnvironment()],
-                              "${BUILD_NUMBER}-${shortHash}",
-                              defaultAWSRegion[getDeploymentEnvironment()],
-                              cpuRequest[getDeploymentEnvironment()],
-                              instanceGroup[getDeploymentEnvironment()],
-                              ingressClass[getDeploymentEnvironment()],
-                              lbScheme[getDeploymentEnvironment()],
-                              lbCert,
-                              minReplicas[getDeploymentEnvironment()],
-                              maxReplicas[getDeploymentEnvironment()])
-                        }
-                    }
-                }
-
-                stage('Production') {
-                    when {
-                        expression {
-                            isReleaseTag()
-                        }
-                    }
-                    steps {
-                        script {
-                            echo "Deploying tagged branch, ${currentNamespace[getDeploymentEnvironment()]} to production"
-                            sh "yq d -i .cxcloud.yaml routing.domain"
-                            def nrOfPaths = sh (
-                                script: "yq r .cxcloud.yaml 'routing.rules[*].path' | wc -l",
-                                returnStdout: true
-                            ).trim().toInteger()
-                            for (int i = 0; i < nrOfPaths; i++) {
-                              sh "yq w -i .cxcloud.yaml 'routing.rules[${i}].path' \"\$(yq r .cxcloud.yaml 'routing.rules[${i}].path')*\""
-                            }
-                            
-                            def projects = getAllProjects('.').split()
-                            deployProjects(
-                              projects,
-                              currentNamespace[getDeploymentEnvironment()],
-                              repositoryUri[getDeploymentEnvironment()],
-                              BRANCH_NAME,
-                              defaultAWSRegion[getDeploymentEnvironment()],
-                              cpuRequest[getDeploymentEnvironment()],
-                              instanceGroup[getDeploymentEnvironment()],
-                              ingressClass[getDeploymentEnvironment()],
-                              lbScheme[getDeploymentEnvironment()],
-                              lbCert,
-                              minReplicas[getDeploymentEnvironment()],
-                              maxReplicas[getDeploymentEnvironment()])
                         }
                     }
                 }

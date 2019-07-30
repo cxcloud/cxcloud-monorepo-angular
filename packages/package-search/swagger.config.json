@@ -3,7 +3,7 @@
     "basePath": "/api/search/v1",
     "outputDirectory": "./dist",
     "entryFile": "./src/index.ts",
-    "name": "search",
+    "name": "package-search",
     "description": "A CXCloud search microservice",
     "license": "ISC",
     "produces": ["application/json"],

@@ -2,11 +2,11 @@
   "name": "package-search",
   "version": "0.1.0",
   "description": "A CXCloud Search Microservice",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
-    "build": "tsc && npm run swagger",
+    "build": "tsc --project tsconfig.json && npm run swagger",
     "start": "ts-node src/index.ts",
-    "start:production": "node dist/index.js",
+    "start:production": "node dist/src/index.js",
     "dev": "npm run swagger && nodemon",
     "swagger": "swaggerGen -c ./swagger.config.json",
     "format": "prettier --write 'src/**/*.ts'",
@@ -36,6 +36,7 @@
     "dotenv": "^8.0.0",
     "express": "^4.16.2",
     "express-api-error-handler": "^1.1.0",
+    "find-config": "^1.0.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@
     "basePath": "/api/commerce/v1",
     "outputDirectory": "./dist",
     "entryFile": "./src/index.ts",
-    "name": "commerce",
+    "name": "package-commerce",
     "description": "A CXCloud Microservice",
     "license": "ISC",
     "produces": ["application/json"],

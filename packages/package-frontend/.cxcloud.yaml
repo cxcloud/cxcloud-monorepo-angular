@@ -7,7 +7,7 @@ deployment:
     version: $APP_VERSION
   serviceAnnotations:
     alb.ingress.kubernetes.io/healthcheck-path: '/healthcheck'
-  containerPort: 4200
+  containerPort: 80
   port: 80
   replicas: $MIN_REPLICAS
   cpuRequest: $CPU_REQUEST

@@ -36,11 +36,7 @@ app.get('/api/search', (req: any, res: any) => {
 const v1 = express.Router();
 Server.buildServices(v1, ...controllers);
 
-Server.swagger(
-  v1,
-  path.resolve(__dirname, '../dist/swagger.json'),
-  '/api-docs'
-);
+Server.swagger(v1, path.resolve(__dirname, '../swagger.json'), '/api-docs');
 
 app.use('/api/search/v1', v1);
 
