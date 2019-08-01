@@ -18,8 +18,15 @@ def defaultAWSRegion = [
 // Subdomain value that we want to replace for routing.domain in the .cxcloud.yaml routing section
 def oldSubDomainInYaml = [
     'pr'         : '\\$GIT_BRANCH',
-    'staging'    : '\\$GIT_BRANCH.dev',
-    'production' : '\\$GIT_BRANCH.dev'
+    'staging'    : '\\$GIT_BRANCH.dev.demo',
+    'production' : '\\$GIT_BRANCH.dev.demo'
+]
+
+// New subdomain value that we want to replace to for routing.domain in the .cxcloud.yaml routing section
+def newSubDomainInYaml = [
+    'pr'         : env.BRANCH_NAME.toLowerCase(),
+    'staging'    : 'demo',
+    'production' : 'www'
 ]
 
 // Protocol to use for url
@@ -287,7 +294,7 @@ pipeline {
                             ) == 0
                             currentNamespaceURL = updateDomainName(
                                 oldSubDomainInYaml[getDeploymentEnvironment()],
-                                currentNamespace[getDeploymentEnvironment()],
+                                newSubDomainInYaml[getDeploymentEnvironment()],
                                 protocol[getDeploymentEnvironment()]
                             )
                             lbCert = getACMCertificateARN(
