@@ -1,5 +1,5 @@
 {
-  "name": "cxcloud-demo",
+  "name": "package-frontend",
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
@@ -57,6 +57,7 @@
     "rxjs-tslint": "^0.1.5",
     "serve": "^11.1.0",
     "ts-node": "~3.2.0",
-    "tslint": "^5.11.0"
+    "tslint": "^5.11.0",
+    "typescript": "3.1.3"
   }
 }

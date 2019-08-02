@@ -3,7 +3,7 @@
     "basePath": "/api/content/v1",
     "outputDirectory": "./dist",
     "entryFile": "./src/index.ts",
-    "name": "content",
+    "name": "package-content",
     "description": "A CXCloud Content microservice",
     "license": "ISC",
     "produces": ["application/json"],

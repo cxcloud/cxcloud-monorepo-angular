@@ -1,9 +1,9 @@
-import * as express from 'express';
-import * as cors from 'cors';
-import * as config from 'config';
-import * as path from 'path';
-import * as os from 'os';
-import * as bodyParser from 'body-parser';
+import express from 'express';
+import cors from 'cors';
+import config from 'config';
+import path from 'path';
+import os from 'os';
+import bodyParser from 'body-parser';
 import { Server } from 'typescript-rest';
 import { logger } from './utils/logger';
 import { attachAuthToken } from './utils/auth-middleware';
@@ -22,7 +22,7 @@ app.use(attachAuthToken);
 app.disable('x-powered-by');
 
 // Health Check
-app.get('/api/search', (req, res) => {
+app.get('/api/search', (req: any, res: any) => {
   res.json({
     health: 'OK',
     uptime: process.uptime(),
@@ -36,11 +36,7 @@ app.get('/api/search', (req, res) => {
 const v1 = express.Router();
 Server.buildServices(v1, ...controllers);
 
-Server.swagger(
-  v1,
-  path.resolve(__dirname, '../dist/swagger.json'),
-  '/api-docs'
-);
+Server.swagger(v1, path.resolve(__dirname, '../swagger.json'), '/api-docs');
 
 app.use('/api/search/v1', v1);
 
