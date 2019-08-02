@@ -60,7 +60,7 @@ def branchDescription = [
 // Ingress class to use for the deployment
 def ingressClass = [
     'pr'         : 'nginx',
-    'staging'    : 'nginx',
+    'staging'    : 'nginx-public',
     'production' : 'alb'
 ]
 
