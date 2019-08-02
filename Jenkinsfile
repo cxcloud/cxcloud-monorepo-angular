@@ -39,7 +39,7 @@ def protocol = [
 // ACM certificate to use for alb ingress controller
 def certificateACM = [
     'pr'         : '*.dev.demo.cxcloud.com',
-    'staging'    : '*.demo.cxcloud.com',
+    'staging'    : '*.dev.demo.cxcloud.com',
     'production' : 'demo.cxcloud.com'
 ]
 
@@ -526,6 +526,11 @@ pipeline {
                     }
                 }
                 stage('Deploy') {
+                    when {
+                        expression {
+                            !isOnlyBranch()
+                        }
+                    }
                     steps {
                         script {
                             def shortHash  = getShortHash()
