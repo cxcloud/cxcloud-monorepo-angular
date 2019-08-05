@@ -23,5 +23,6 @@ module.exports = {
       clientId: process.env.CTP_USER_CLIENT_ID,
       clientSecret: process.env.CTP_USER_CLIENT_SECRET
     }
-  }
+  },
+  swaggerJsonDir: '../'
 };
