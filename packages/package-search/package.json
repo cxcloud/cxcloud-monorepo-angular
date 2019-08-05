@@ -7,7 +7,7 @@
     "build": "tsc --project tsconfig.json && npm run swagger",
     "start": "ts-node src/index.ts",
     "start:production": "node dist/src/index.js",
-    "dev": "npm run swagger && nodemon",
+    "dev": "npm run build && npm run swagger && nodemon",
     "swagger": "swaggerGen -c ./swagger.config.json",
     "format": "prettier --write 'src/**/*.ts'",
     "precommit": "lint-staged",
