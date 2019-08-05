@@ -22,7 +22,7 @@ app.use(attachAuthToken);
 app.disable('x-powered-by');
 
 // Health Check
-app.get('/api/commerce', (req, res) => {
+app.get('/api/commerce', (req: any, res: any) => {
   res.json({
     health: 'OK',
     uptime: process.uptime(),
@@ -36,7 +36,7 @@ Server.buildServices(v1, ...controllers);
 
 Server.swagger(
   v1,
-  path.resolve(__dirname, '../dist/swagger.json'),
+  path.resolve(__dirname, '../swagger.json'),
   '/api-docs',
   host || `localhost:${port}`,
   [host ? 'https' : 'http']

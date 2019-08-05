@@ -22,7 +22,7 @@ app.use(attachAuthToken);
 app.disable('x-powered-by');
 
 // Health Check
-app.get('/api/content', (req, res) => {
+app.get('/api/content', (req: any, res: any) => {
   res.json({
     health: 'OK',
     uptime: process.uptime(),
@@ -36,11 +36,7 @@ app.get('/api/content', (req, res) => {
 const v1 = express.Router();
 Server.buildServices(v1, ...controllers);
 
-Server.swagger(
-  v1,
-  path.resolve(__dirname, '../dist/swagger.json'),
-  '/api-docs'
-);
+Server.swagger(v1, path.resolve(__dirname, '../swagger.json'), '/api-docs');
 
 app.use('/api/content/v1', v1);
 

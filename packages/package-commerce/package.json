@@ -1,12 +1,12 @@
 {
-  "name": "commerce",
+  "name": "package-commerce",
   "version": "0.1.0",
   "description": "A CXCloud Commerce Microservice",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
-    "build": "tsc && npm run swagger",
+    "build": "tsc --project tsconfig.json && npm run swagger",
     "start": "ts-node src/index.ts",
-    "start:production": "node dist/index.js",
+    "start:production": "node dist/src/index.js",
     "dev": "npm run swagger && nodemon",
     "swagger": "swaggerGen -c ./swagger.config.json",
     "test": "jest --coverage --coverageDirectory=quality-reports"
@@ -42,6 +42,7 @@
     "ts-node": "^3.3.0",
     "typescript-rest": "^1.2.2",
     "typescript-rest-swagger": "0.0.17",
-    "@types/winston": "^2.4.4"
+    "@types/winston": "^2.4.4",
+    "typescript": "^3.3.3333"
   }
 }

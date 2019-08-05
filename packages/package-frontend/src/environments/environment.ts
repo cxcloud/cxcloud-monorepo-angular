@@ -19,6 +19,6 @@ export const environment = {
     apiUrl: 'http://commerce.localhost/api/commerce/v1/auth'
   },
   search: {
-    apiUrl: 'https://demo.cxcloud.com/api/search/v1'
+    apiUrl: '/api/search/v1'
   }
 };
