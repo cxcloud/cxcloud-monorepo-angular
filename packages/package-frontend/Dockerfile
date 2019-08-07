@@ -22,10 +22,11 @@ COPY scripts/replace.sh dist/config/
 
 ### STAGE 2: Setup ###
 
-FROM nginx:1.13.9
+FROM nginx:1.17
 
 ## Copy our default nginx config
-COPY scripts/nginx.conf /etc/nginx/conf.d/default.conf
+COPY scripts/nginx.conf /etc/nginx/nginx.conf
+COPY scripts/nginx-default-app.conf /etc/nginx/conf.d/default.conf
 COPY scripts/nginx.sh /run.sh
 
 ## Remove default nginx website
