@@ -1,0 +1,37 @@
+{
+  "name": "package-content",
+  "version": "0.1.0",
+  "description": "A CXCloud Mailer Microservice",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "start:production": "node dist/src/index.js",
+    "dev": "npm run build && npm run swagger && nodemon",
+    "test": "jest --coverage --coverageDirectory=quality-reports"
+  },
+  "author": {
+    "name": "Mesut Paksoy"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@cxcloud/mailer": "^1.0.3",
+    "@cxcloud/process-engine": "^1.4.0",
+    "@types/ejs": "^2.6.3",
+    "@types/nodemailer": "^6.2.1",
+    "@types/ramda": "^0.25.50",
+    "aws-sdk": "^2.503.0",
+    "config": "^2.0.1",
+    "ejs": "^2.6.2",
+    "find-config": "^1.0.0",
+    "nodemailer": "^6.3.0",
+    "ramda": "^0.26.1",
+    "typescript": "^3.5.3",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/config": "0.0.33",
+    "@types/node": "^8.10.51",
+    "typescript": "^3.3.3333",
+    "@types/winston": "^2.4.4"
+  }
+}
