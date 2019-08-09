@@ -2,6 +2,7 @@ import { GET, Path } from 'typescript-rest';
 import { Tags } from 'typescript-rest-swagger';
 import { Shipping } from '@cxcloud/commerce';
 import { ShippingMethod } from '@cxcloud/ct-types/shipping';
+import { logger } from '../utils/logger';
 
 @Path('/shipping')
 export class ShippingController {
@@ -9,6 +10,11 @@ export class ShippingController {
   @Tags('shipping')
   @GET
   getShippingMethods(): Promise<ShippingMethod[]> {
-    return Shipping.fetchMethods();
+    try {
+      return Shipping.fetchMethods();
+    } catch (err) {
+      logger.error(err);
+      return err;
+    }
   }
 }
