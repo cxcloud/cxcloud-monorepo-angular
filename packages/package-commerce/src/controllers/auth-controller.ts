@@ -7,6 +7,7 @@ import {
   AnonymousSignInResult
 } from '@cxcloud/ct-types/customers';
 import { generateRandomNumber } from '../utils/random';
+import { logger } from '../utils/logger';
 
 export interface ILogin {
   username: string;
@@ -23,11 +24,17 @@ export class AuthController {
   @POST
   loginUser(body: ILogin): Promise<TokenizedSignInResult> {
     const { username, password } = body;
-    return Customers.login(
-      username,
-      password,
-      this.ctx.response.locals.authToken
-    );
+    try {
+      logger.info(`User logged in successfully`, { username });
+      return Customers.login(
+        username,
+        password,
+        this.ctx.response.locals.authToken
+      );
+    } catch (err) {
+      logger.error(`Login failed username ${username}`, err);
+      return err;
+    }
   }
 
   @Path('/register')
@@ -41,7 +48,13 @@ export class AuthController {
       customerNumber: (await generateRandomNumber('CXC-')) || undefined,
       ...body
     };
-    return Customers.register(body, this.ctx.response.locals.authToken);
+    try {
+      logger.info(`User ${body.customerNumber} registered successfully`, body);
+      return Customers.register(body, this.ctx.response.locals.authToken);
+    } catch (err) {
+      logger.error('Authorisation failed', err);
+      return err;
+    }
   }
 
   @Path('/login/anonymous')

@@ -12,6 +12,7 @@ import { Orders } from '@cxcloud/commerce';
 import { Order, PaginatedOrderResult } from '@cxcloud/ct-types/orders';
 import { generateRandomNumber } from '../utils/random';
 import { getQueryOptions } from '../utils/query';
+import { logger } from '../utils/logger';
 
 interface ICreateOrder {
   cartId: string;
@@ -28,12 +29,23 @@ export class OrdersController {
     @Context ctx: ServiceContext
   ): Promise<Order> {
     const { cartId, cartVersion } = body;
-    return Orders.create(
-      cartId,
-      cartVersion,
-      await generateRandomNumber('CXO-'),
-      ctx.response.locals.authToken
-    );
+    try {
+      const orderId = await generateRandomNumber('CXO-');
+      logger.info(`Order ${orderId} created successfully`, {
+        cartId,
+        cartVersion,
+        orderId
+      });
+      return Orders.create(
+        cartId,
+        cartVersion,
+        orderId,
+        ctx.response.locals.authToken
+      );
+    } catch (err) {
+      logger.error(`Order is not created`, err);
+      return err;
+    }
   }
 
   @Tags('orders')
