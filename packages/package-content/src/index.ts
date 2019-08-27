@@ -36,7 +36,14 @@ app.get('/api/content', (req: any, res: any) => {
 const v1 = express.Router();
 Server.buildServices(v1, ...controllers);
 
-Server.swagger(v1, path.resolve(__dirname, '../swagger.json'), '/api-docs');
+Server.swagger(
+  v1,
+  path.resolve(
+    __dirname,
+    `${config.get<string>('swaggerJsonDir')}/swagger.json`
+  ),
+  '/api-docs'
+);
 
 app.use('/api/content/v1', v1);
 

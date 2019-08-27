@@ -36,7 +36,10 @@ Server.buildServices(v1, ...controllers);
 
 Server.swagger(
   v1,
-  path.resolve(__dirname, '../swagger.json'),
+  path.resolve(
+    __dirname,
+    `${config.get<string>('swaggerJsonDir')}/swagger.json`
+  ),
   '/api-docs',
   host || `localhost:${port}`,
   [host ? 'https' : 'http']
