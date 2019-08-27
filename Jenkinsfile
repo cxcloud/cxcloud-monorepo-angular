@@ -438,11 +438,11 @@ pipeline {
                         def status       = ""
                         // Wait until quality gate report is ready
                         waitUntil {
-                          status = sh (
-                              script: "curl -s ${ceTaskUrl} | jq -r .task.status",
-                              returnStdout: true
-                          ).trim()
-                          return (status != "IN_PROGRESS")
+                            status = sh (
+                                script: "curl -s ${ceTaskUrl} | jq -r .task.status",
+                                returnStdout: true
+                            ).trim()
+                            return (status != "IN_PROGRESS")
                         }
                         if (status != "SUCCESS") {
                             qualityGateError = true
